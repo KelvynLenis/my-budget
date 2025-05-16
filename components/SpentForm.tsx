@@ -1,74 +1,198 @@
 'use client'
 
-import { Plus } from "lucide-react";
-import { Item } from "./Item";
-import { Button } from "./ui/button";
-import { useState } from "react";
-import { Input } from "./ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form'
+import { date, z } from 'zod'
+import { Plus } from 'lucide-react'
+import { Item } from './Item'
+import { Button } from './ui/button'
+import { useEffect, useState } from 'react'
+import { Input } from './ui/input'
+import { useForm } from 'react-hook-form'
+import { databases, ID } from '@/lib/appwrite'
+import Link from 'next/link'
+import { Label } from './ui/label'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'react-toastify'
+import type { ExpenseProps } from '@/types'
+import { createExpense } from '@/functions/expenses/create-expense'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 
-interface ItemProps {
-  id: number;
-  item: string;
-  cost: number;
+interface SpentFormProps {
+  list?: ExpenseProps
 }
 
+const formSchema = z.object({
+  title: z.string().min(1),
+  price: z.number(),
+  date: z.string().date(),
+})
 
-export function SpentForm() {
-  const [items, setItems] = useState<ItemProps[]>([]);
-  const [newItem, setNewItem] = useState('')
-  const [newCost, setNewCost] = useState<number>(0)
+export function SpentForm({ list }: SpentFormProps) {
+  const [open, setOpen] = useState(false)
 
-  function handleAddItem(item: ItemProps) {
-    setItems([...items, item])
-    setNewItem('')
-    setNewCost(0)
+  const form = useForm<z.infer<typeof formSchema>>({
+    // resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: list?.title || '',
+      price: list?.price || 0,
+      date: list?.date || new Date().toISOString(),
+    },
+  })
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log(values)
+
+    if (list) {
+      const updateList = async () =>
+        await databases.updateDocument(
+          process.env.NEXT_PUBLIC_DATABASE_ID!,
+          process.env.NEXT_PUBLIC_LISTS_COLLECTION!,
+          list ? list.$id : '',
+          {
+            title: values.title,
+            price: values.price,
+            date: new Date(),
+          }
+        )
+
+      toast.promise(updateList, {
+        pending: 'Atualizando lista',
+        success: 'Lista atualizada com sucesso',
+        error: 'Erro ao atualizar lista',
+      })
+
+      return
+    }
+
+    toast.promise(
+      createExpense({
+        title: values.title,
+        price: Number(values.price),
+        date: values.date,
+      }),
+      {
+        pending: 'Criando lista',
+        success: 'Lista criada com sucesso',
+        error: 'Erro ao criar lista',
+      }
+    )
+
+    setOpen(false)
   }
-  function handleDeleteItem(id: number) {
-    setItems(items.filter(item => item.id !== id))
-  }
+
+  useEffect(() => {}, [])
 
   return (
     <>
-      <div className="bg-white rounded-xl w-72 h-full flex flex-col text-sm font-medium md:w-[35rem] md:h-[30rem] xl:w-[50rem] xl:h-[35rem]">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="bg-white rounded-xl font-semibold hover:bg-primary hover:ring-1 hover:ring-white hover:text-white">
+            New list
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="bg-transparent w-fit h-fit p-0 max-w-fit gap-0 border-none">
+          <DialogHeader>
+            <DialogTitle className="w-full h-8 bg-primary flex items-center justify-center text-white font-black px-6 py-1 rounded-t-xl text-xl">
+              Meu gasto
+            </DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="bg-white rounded-b-xl w-72 h-full flex flex-col text-sm font-medium md:w-[35rem] "
+            >
+              <div className="flex flex-col h-full px-3 gap-4 overflow-y-scroll py-2 z-0">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col w-full">
+                      <Label className="text-xl">Título</Label>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder="Título"
+                          className="rounded-xl bg-input"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col w-full">
+                      <Label className="text-xl">Preço</Label>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="preço"
+                          className="rounded-xl bg-input"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <div className="w-full h-8 bg-primary flex items-center justify-center text-white font-black px-6 py-1 rounded-t-xl">
-          <span>Meu gasto</span>
-        </div>
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col w-full">
+                      <Label className="text-xl">Data</Label>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          placeholder="preço"
+                          className="rounded-xl bg-input"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-        <div className="flex flex-col h-full px-3 gap-4 overflow-y-scroll py-2">
-
-          <div className="flex flex-col gap-2">
-            <label className="text-xl">Título</label>
-            <Input type="text" placeholder="Título" className="rounded-xl bg-input" value={newItem} onChange={(e) => setNewItem(e.target.value)} />
-          </div>
-
-
-          <div className="flex flex-col gap-2 h-full bg-zinc-100 rounded-xl p-1">
-            <div className="w-full justify-between flex px-2 py-1 text-lg">
-              <span className="">Item</span>
-              <span className="w-1/3 md:w-1/6 xl:self-center xl:text-center">Cost</span>
-            </div>
-            <div className="flex gap-2">
-              <Input type="text" placeholder="Item" className="rounded-xl bg-input" value={newItem} onChange={(e) => setNewItem(e.target.value)} />
-              <Input type="number" placeholder="R$" className="w-20 rounded-xl bg-input text-sm" value={newCost} onChange={(e) => setNewCost(Number(e.target.value))} />
-              <Button className="rounded-full w-8 h-8 " onClick={() => handleAddItem({ id: items.length, item: newItem, cost: newCost })}>
-                <Plus className="text-white font-black hover:opacity-50" />
-              </Button>
-            </div>
-
-            {
-              items.length > 0 && items.map((item, index) => (
-                <Item key={index} id={item.id} item={item.item} cost={item.cost} handleDeleteItem={handleDeleteItem} />
-              ))
-            }
-          </div>
-        </div>
-
-        <div className="flex w-full justify-between px-6 py-2 text-white border-t-2">
-          <Button className="rounded-xl w-14 h-8 self-center bg-save">Save</Button>
-          <Button className="rounded-xl w-14 h-8 self-center bg-cancel">Cancel</Button>
-        </div>
-      </div>
+              <div className="flex w-full justify-between px-6 py-2 text-white border-t-2 z-10">
+                <Button
+                  type="submit"
+                  className="rounded-xl w-14 h-8 self-center bg-save"
+                >
+                  Save
+                </Button>
+                <Link href="/">
+                  <Button
+                    type="button"
+                    className="rounded-xl w-14 h-8 self-center bg-cancel"
+                  >
+                    <DialogClose>Cancel</DialogClose>
+                  </Button>
+                </Link>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

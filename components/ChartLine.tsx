@@ -31,7 +31,7 @@ const data = [
   { month: "December", value: 800 },
 ];
 
-export default class Chart extends PureComponent {
+export default class ChartLine extends PureComponent {
 
   render() {
     return (

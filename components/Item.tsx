@@ -1,4 +1,4 @@
-import { Menu, Pencil, Trash } from "lucide-react";
+import { Ellipsis, Menu, Pencil, Trash } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState } from "react";
@@ -37,20 +37,20 @@ export function Item({ id, item, cost, handleDeleteItem }: ItemProps) {
         }
 
 
-        <Button className={twMerge(clsx("rounded-full w-8 h-8 self-center bg-white", isMenuOpen && "ring-2 ring-primary"))} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          <Menu className="text-black" />
+        <Button type="button" className={twMerge(clsx("group rounded-full w-8 h-8 self-center bg-white", isMenuOpen && "ring-2 ring-primary"))} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <Ellipsis className="text-black group-hover:text-white" />
         </Button>
 
         {
           isMenuOpen && (
-            <div className="absolute flex flex-col w-fit px-1 rounded-xl py-2 gap-2 right-7 top-6 bg-white ring-1 ring-primary">
-              <button className="rounded-xl flex w-fit h-fit self-center items-center gap-1 font-bold" onClick={() => handleDeleteItem(id)}>
+            <div className="absolute flex flex-col w-fit px-3 rounded-xl py-3 gap-2 right-7 top-6 bg-white ring-1 ring-zinc-300 shadow-lg z-10">
+              <button type="button" className="rounded-xl flex w-fit h-fit self-center items-center gap-1 font-bold" onClick={() => handleDeleteItem(id)}>
                 <Trash size={24} className="text-white bg-negative rounded-full flex p-1" />
                 <span>
                   Deletar
                 </span>
               </button>
-              <button className="rounded-xl flex w-fit h-fit gap-1 font-bold bg-transparent" onClick={() => setIsEdit(!isEdit)}>
+              <button type="button" className="rounded-xl flex w-fit h-fit gap-1 font-bold bg-transparent" onClick={() => setIsEdit(!isEdit)}>
                 <Pencil size={24} className="text-white bg-primary rounded-full flex p-1" />
                 Editar
               </button>
