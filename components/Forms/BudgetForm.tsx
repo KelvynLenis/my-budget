@@ -8,9 +8,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
 import { getBudget } from '@/functions/budget/get-budget'
 import { addBudget } from '@/functions/budget/add-budget'
+import type { Sheet } from '@/types'
+import { updateBudget } from '@/functions/budget/update-budget'
+import { toast } from 'react-toastify'
 
 interface BudgetFormProps {
   isEdit?: boolean
@@ -20,16 +22,14 @@ interface BudgetFormProps {
 export function BudgetForm({ isEdit, icon }: BudgetFormProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [budget, setBudget] = useState(0)
-  const [currentBudget, setCurrentBudget] = useState(0)
+  const [sheet, setSheet] = useState<Sheet>({} as Sheet)
 
   useEffect(() => {
     const fetchBudget = async () => {
       try {
         const sheet = await getBudget()
 
-        setCurrentBudget(sheet.budget)
-
-        console.log(sheet)
+        setSheet(sheet)
 
         if (isEdit) {
           setBudget(sheet.budget)
@@ -42,17 +42,28 @@ export function BudgetForm({ isEdit, icon }: BudgetFormProps) {
   }, [])
 
   async function onSubmit() {
-    try {
-      if (isEdit) {
-        // const result = await addBudget({ id: '1', budget })
+    const submit = async () => {
+      try {
+        if (isEdit) {
+          const result = await addBudget({ id: sheet?.$id, budget })
 
-        return
+          setIsModalOpen(false)
+          return
+        }
+
+        await updateBudget({ id: sheet?.$id, budget })
+
+        setIsModalOpen(false)
+      } catch (error) {
+        console.error(error)
       }
-
-      // await addBudget(currentBudget.$id, budget)
-    } catch (error) {
-      console.error(error)
     }
+
+    toast.promise(submit, {
+      pending: 'Atualizando orçamento',
+      success: 'Orçamento atualizado com sucesso',
+      error: 'Erro ao atualizar orçamento',
+    })
   }
 
   return (
@@ -79,9 +90,10 @@ export function BudgetForm({ isEdit, icon }: BudgetFormProps) {
             />
             <button
               type="button"
+              onClick={onSubmit}
               className="bg-primary rounded-md text-white hover:opacity-60 w-9/12 px-4 py-2"
             >
-              Adicionar
+              {isEdit ? 'Editar' : 'Adicionar'}
             </button>
           </div>
         </DialogContent>

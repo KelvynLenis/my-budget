@@ -1,5 +1,5 @@
-import { BalanceBoard } from "@/components/BalanceBoard";
-import { SpentForm } from "@/components/SpentForm";
+import { BalanceBoard } from '@/components/BalanceBoard'
+import { SpentForm } from '@/components/Forms/SpentForm'
 
 export default function NewList() {
   return (
@@ -7,5 +7,5 @@ export default function NewList() {
       <BalanceBoard />
       <SpentForm />
     </main>
-  );
+  )
 }

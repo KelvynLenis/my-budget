@@ -16,5 +16,5 @@ export async function createExpense(values: ExpenseProps) {
     }
   )
 
-  revalidateTag('lists')
+  revalidateTag('expenses')
 }

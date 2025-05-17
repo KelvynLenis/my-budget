@@ -7,6 +7,12 @@ export interface ExpenseProps {
   date: string
 }
 
+export interface MonthHistoryProps {
+  $id?: string
+  monthAndYear: string
+  value: number
+}
+
 const sheetSchema = z.object({
   $collectionId: z.string(),
   $createdAt: z.string().datetime(), // ou apenas z.string() se não quiser validar o formato ISO

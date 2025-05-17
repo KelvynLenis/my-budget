@@ -9,14 +9,14 @@ import {
 } from '@/components/ui/form'
 import { date, z } from 'zod'
 import { Plus } from 'lucide-react'
-import { Item } from './Item'
-import { Button } from './ui/button'
+import { Item } from '../Item'
+import { Button } from '../ui/button'
 import { useEffect, useState } from 'react'
-import { Input } from './ui/input'
+import { Input } from '../ui/input'
 import { useForm } from 'react-hook-form'
 import { databases, ID } from '@/lib/appwrite'
 import Link from 'next/link'
-import { Label } from './ui/label'
+import { Label } from '../ui/label'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'react-toastify'
 import type { ExpenseProps } from '@/types'
@@ -30,6 +30,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { getHistory } from '@/functions/monthHistory/get-history'
+import { getCurrentMonthHistory } from '@/functions/monthHistory/get-current-month-history'
+import { updateMonthHistory } from '@/functions/monthHistory/update-month-history'
+import { createMonthHistory } from '@/functions/monthHistory/create-month-history'
 
 interface SpentFormProps {
   list?: ExpenseProps
@@ -54,14 +58,12 @@ export function SpentForm({ list }: SpentFormProps) {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-
     if (list) {
       const updateList = async () =>
         await databases.updateDocument(
           process.env.NEXT_PUBLIC_DATABASE_ID!,
           process.env.NEXT_PUBLIC_LISTS_COLLECTION!,
-          list ? list.$id : '',
+          list ? list.$id! : '',
           {
             title: values.title,
             price: values.price,
@@ -70,26 +72,52 @@ export function SpentForm({ list }: SpentFormProps) {
         )
 
       toast.promise(updateList, {
-        pending: 'Atualizando lista',
-        success: 'Lista atualizada com sucesso',
-        error: 'Erro ao atualizar lista',
+        pending: 'Updating expense',
+        success: 'Expense updated successfully',
+        error: 'Error updating expense',
       })
 
       return
     }
 
-    toast.promise(
-      createExpense({
+    const create = async () => {
+      const currentMonthHistory = await getCurrentMonthHistory()
+
+      if (currentMonthHistory) {
+        await createExpense({
+          title: values.title,
+          price: Number(values.price),
+          date: values.date,
+        })
+
+        await updateMonthHistory({
+          id: currentMonthHistory.$id!,
+          value: currentMonthHistory.value + Number(values.price),
+        })
+
+        return
+      }
+
+      const date = new Date()
+      const monthAndYear = `${date.getMonth() + 1}/${date.getFullYear()}`
+
+      await createMonthHistory({
+        monthAndYear: monthAndYear,
+        value: Number(values.price),
+      })
+
+      await createExpense({
         title: values.title,
         price: Number(values.price),
         date: values.date,
-      }),
-      {
-        pending: 'Criando lista',
-        success: 'Lista criada com sucesso',
-        error: 'Erro ao criar lista',
-      }
-    )
+      })
+    }
+
+    toast.promise(create, {
+      pending: 'Saving expense...',
+      success: 'Expense saved successfully',
+      error: 'Error saving expense',
+    })
 
     setOpen(false)
   }
@@ -115,7 +143,7 @@ export function SpentForm({ list }: SpentFormProps) {
               onSubmit={form.handleSubmit(onSubmit)}
               className="bg-white rounded-b-xl w-72 h-full flex flex-col text-sm font-medium md:w-[35rem] "
             >
-              <div className="flex flex-col h-full px-3 gap-4 overflow-y-scroll py-2 z-0">
+              <div className="flex flex-col h-full px-3 gap-4 py-2 z-0">
                 <FormField
                   control={form.control}
                   name="title"
@@ -161,7 +189,7 @@ export function SpentForm({ list }: SpentFormProps) {
                       <Label className="text-xl">Data</Label>
                       <FormControl>
                         <Input
-                          type="date"
+                          type="datetime"
                           placeholder="preço"
                           className="rounded-xl bg-input"
                           {...field}

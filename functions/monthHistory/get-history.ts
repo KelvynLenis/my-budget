@@ -1,10 +1,10 @@
 'use server'
 
-import { env } from '@/env'
+import type { MonthHistoryProps } from '@/types'
 
-export async function getExpenses() {
+export async function getHistory(): Promise<MonthHistoryProps[]> {
   const res = await fetch(
-    `https://cloud.appwrite.io/v1/databases/${process.env.NEXT_PUBLIC_DATABASE_ID}/collections/${env.NEXT_PUBLIC_LISTS_COLLECTION}/documents`,
+    `https://cloud.appwrite.io/v1/databases/${process.env.NEXT_PUBLIC_DATABASE_ID}/collections/${process.env.NEXT_PUBLIC_MONTHLY_HISTORY_COLLECTION}/documents`,
     {
       method: 'GET',
       headers: {
@@ -23,7 +23,7 @@ export async function getExpenses() {
     throw new Error('Failed to fetch lists')
   }
 
-  const lists = await res.json()
+  const histories = await res.json()
 
-  return lists
+  return histories.documents
 }

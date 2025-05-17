@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from './ui/button'
-import { SpentForm } from './SpentForm'
+import { SpentForm } from './Forms/SpentForm'
 
 export function Header() {
   return (

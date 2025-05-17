@@ -2,9 +2,8 @@
 
 import { databases } from '@/lib/appwrite'
 import { revalidateTag } from 'next/cache'
-import { getBudget } from './get-budget'
 
-export async function addBudget({
+export async function updateBudget({
   id,
   budget,
 }: { id: string; budget: number }) {
@@ -21,6 +20,5 @@ export async function addBudget({
     revalidateTag('budget')
   } catch (error) {
     console.error(error)
-    throw error
   }
 }
